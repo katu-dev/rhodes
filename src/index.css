@@ -1,0 +1,175 @@
+@import "tailwindcss";
+
+:root {
+  /* Tactical Techwear Theme (Arknights/WuWa) */
+  --color-bg: #09090b;
+  /* zinc-950 */
+  --color-surface: #18181b;
+  /* zinc-900 */
+  --color-border: #3f3f46;
+  /* zinc-700 */
+
+  --color-primary: #22d3ee;
+  /* cyan-400 */
+  --color-primary-dim: #0e7490;
+  /* cyan-700 */
+
+  --color-accent: #eab308;
+  /* yellow-500 */
+
+  --color-text-main: #f4f4f5;
+  /* zinc-100 */
+  --color-text-dim: #a1a1aa;
+  /* zinc-400 */
+
+  --dot-color: #27272a;
+  /* zinc-800 */
+}
+
+@theme {
+  --font-display: "Outfit", sans-serif;
+  --font-mono: "JetBrains Mono", monospace;
+
+  --color-tech-bg: var(--color-bg);
+  --color-tech-surface: var(--color-surface);
+  --color-tech-border: var(--color-border);
+  --color-tech-primary: var(--color-primary);
+  --color-tech-accent: var(--color-accent);
+}
+
+body {
+  background-color: var(--color-bg);
+  color: var(--color-text-main);
+  font-family: var(--font-display);
+  overflow: hidden;
+  /* App-like feel */
+}
+
+/* Background Pattern: Dot Grid */
+.bg-tech-grid {
+  background-image: radial-gradient(var(--dot-color) 1px, transparent 1px);
+  background-size: 24px 24px;
+}
+
+/* Utilities */
+.tech-border {
+  border: 1px solid var(--color-border);
+}
+
+.tech-panel {
+  background-color: rgba(24, 24, 27, 0.9);
+  border: 1px solid var(--color-border);
+  backdrop-filter: blur(8px);
+}
+
+/* Clip Paths for Angled Corners */
+.clip-angle {
+  clip-path: polygon(0 0,
+      100% 0,
+      100% calc(100% - 12px),
+      calc(100% - 12px) 100%,
+      0 100%);
+}
+
+.clip-angle-inv {
+  clip-path: polygon(0 0,
+      calc(100% - 12px) 0,
+      100% 12px,
+      100% 100%,
+      0 100%);
+}
+
+/* Glitch Text Effect */
+.glitch-text {
+  position: relative;
+}
+
+.glitch-text::before,
+.glitch-text::after {
+  content: attr(data-text);
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 100%;
+  height: 100%;
+}
+
+.glitch-text::before {
+  left: 2px;
+  text-shadow: -1px 0 #ff00c1;
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim 5s infinite linear alternate-reverse;
+}
+
+.glitch-text::after {
+  left: -2px;
+  text-shadow: -1px 0 #00fff9;
+  clip: rect(44px, 450px, 56px, 0);
+  animation: glitch-anim2 5s infinite linear alternate-reverse;
+}
+
+@keyframes glitch-anim {
+  0% {
+    clip: rect(11px, 9999px, 34px, 0);
+  }
+
+  5% {
+    clip: rect(82px, 9999px, 99px, 0);
+  }
+
+  10% {
+    clip: rect(6px, 9999px, 20px, 0);
+  }
+
+  15% {
+    clip: rect(54px, 9999px, 93px, 0);
+  }
+
+  20% {
+    clip: rect(23px, 9999px, 76px, 0);
+  }
+
+  100% {
+    clip: rect(48px, 9999px, 12px, 0);
+  }
+}
+
+@keyframes glitch-anim2 {
+  0% {
+    clip: rect(65px, 9999px, 86px, 0);
+  }
+
+  5% {
+    clip: rect(12px, 9999px, 46px, 0);
+  }
+
+  10% {
+    clip: rect(34px, 9999px, 12px, 0);
+  }
+
+  15% {
+    clip: rect(78px, 9999px, 90px, 0);
+  }
+
+  100% {
+    clip: rect(3px, 9999px, 64px, 0);
+  }
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-bg);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-border);
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--color-primary);
+}
