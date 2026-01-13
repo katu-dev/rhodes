@@ -91,94 +91,273 @@ export function BattleScreen({ isPvp, playerSquadOverride, enemySquadOverride, o
         if (battleState !== 'fighting') return;
 
         const battleLoop = async () => {
+            // Setup Teams with Skills
+            const initializeUnit = (unit, team) => {
+                const baseChar = CHARACTERS.find(c => c.id === unit.baseId) || {};
+                const skills = baseChar.skills || {};
+
+                // Base Stats
+                let stats = { ...unit.stats };
+
+                // Apply Passive
+                let passiveEffect = null;
+                if (skills.passive) {
+                    if (skills.passive.effect.type === 'buff_stat_flat') {
+                        stats[skills.passive.effect.stat] += skills.passive.effect.value;
+                    } else if (skills.passive.effect.type === 'buff_stat_mult') {
+                        stats[skills.passive.effect.stat] = Math.floor(stats[skills.passive.effect.stat] * (1 + skills.passive.effect.value));
+                    }
+                    passiveEffect = skills.passive;
+                }
+
+                return {
+                    ...unit,
+                    currentHp: stats.health, // Reset HP to potentially buffed max
+                    maxHp: stats.health,
+                    stats: stats,
+                    team: team,
+                    sp: 0,
+                    cooldowns: { skill1: 0, skill2: 0 },
+                    activeBuffs: [], // { stat, value, duration }
+                    skills: skills
+                };
+            };
+
             // Setup Teams (Use Override if PVP)
             let allies = [];
             if (playerSquadOverride) {
-                allies = playerSquadOverride.map(char => ({
+                allies = playerSquadOverride.map(char => initializeUnit({
                     ...char,
-                    currentHp: Number(char.hp || char.maxHp), // Snapshot already has stats
-                    maxHp: Number(char.maxHp),
                     stats: {
-                        attack: char.atk,
-                        defense: char.def,
-                        speed: char.speed,
-                        health: char.maxHp
-                    },
-                    team: 'ally'
-                }));
+                        attack: char.atk, defense: char.def, speed: char.speed, health: char.maxHp,
+                        critRate: char.critRate || 5, critDmg: char.critDmg || 150,
+                        defPen: char.defPen || 0, regen: char.regen || 0,
+                        evasion: char.evasion || 0, doubleHit: char.doubleHit || 0,
+                        counterRate: char.counterRate || 0
+                    }
+                }, 'ally'));
             } else {
                 allies = selectedSquad.map(uid => {
                     const char = state.inventory.find(c => c.uid === uid);
-                    return {
-                        ...char,
-                        currentHp: calculateStats(char).health,
-                        maxHp: calculateStats(char).health,
-                        stats: calculateStats(char),
-                        team: 'ally'
-                    };
+                    const stats = calculateStats(char);
+                    return initializeUnit({ ...char, stats }, 'ally');
                 });
             }
 
-            // Enemies (Use Override if PVP)
+            // Enemies
             let enemies = [];
             if (enemySquadOverride) {
-                enemies = enemySquadOverride.map(e => ({
+                enemies = enemySquadOverride.map(e => initializeUnit({
                     ...e,
-                    currentHp: Number(e.hp || e.maxHp),
-                    maxHp: Number(e.maxHp),
+                    uid: e.id,
                     stats: {
-                        attack: e.atk,
-                        defense: e.def,
-                        speed: e.speed,
-                        health: e.maxHp
-                    },
-                    uid: e.id, // Use snapshot ID
-                    team: 'enemy'
-                }));
+                        attack: e.atk, defense: e.def, speed: e.speed, health: e.maxHp,
+                        critRate: e.critRate || 5, critDmg: e.critDmg || 150,
+                        defPen: e.defPen || 0, regen: e.regen || 0,
+                        evasion: e.evasion || 0, doubleHit: e.doubleHit || 0,
+                        counterRate: e.counterRate || 0
+                    }
+                }, 'enemy'));
             } else {
-                enemies = ENEMIES.map(e => ({
+                enemies = ENEMIES.map(e => initializeUnit({
                     ...e,
-                    currentHp: e.stats.health,
-                    maxHp: e.stats.health,
                     uid: e.id + Math.random(),
-                    team: 'enemy'
-                }));
+                    stats: {
+                        ...e.stats,
+                        critRate: e.stats.critRate || 5, critDmg: e.stats.critDmg || 150,
+                        defPen: e.stats.defPen || 0, regen: e.stats.regen || 0,
+                        evasion: e.stats.evasion || 0, doubleHit: e.stats.doubleHit || 0,
+                        counterRate: e.stats.counterRate || 0
+                    }
+                }, 'enemy'));
             }
 
             let log = [];
             let round = 1;
 
-            while (allies.some(a => a.currentHp > 0) && enemies.some(e => e.currentHp > 0)) {
-                // await new Promise(r => setTimeout(r, 500)); // Delay for effect (simulated here instantly for logic, visually we might want delay)
+            // Combat Helper
+            const performAttack = (attacker, target, isCounter = false, skillMultiplier = 1.0) => {
+                // Check Temp Buffs
+                let atkBuff = 1.0;
+                attacker.activeBuffs.forEach(b => {
+                    if (b.stat === 'attack') atkBuff += b.value;
+                });
 
-                // Simple Round: All allies attack random enemy, All enemies attack random ally
-                // Sort by speed?
+                // Check Conditional Passive Damage (e.g. W vs Stunned)
+                let conditionalMult = 1.0;
+                if (attacker.skills?.passive?.effect?.type === 'buff_damage_cond') {
+                    const cond = attacker.skills.passive.effect;
+                    if (cond.condition === 'status_stun') {
+                        const isTargetStunned = target.activeBuffs.some(b => b.status === 'stun');
+                        if (isTargetStunned) {
+                            conditionalMult += (cond.value / 100);
+                        }
+                    }
+                }
+
+                // Evasion Check
+                const hitChance = 100 - (target.stats.evasion || 0);
+                if (Math.random() * 100 > hitChance) {
+                    log.push(`${target.name} DODGED attack from ${attacker.name}!`);
+                    return;
+                }
+
+                // Def Pen & Buffs
+                const effectiveAtk = attacker.stats.attack * atkBuff * skillMultiplier * conditionalMult;
+                const defPen = attacker.stats.defPen || 0;
+                let targetDef = target.stats.defense;
+
+                // Def Buffs on Target
+                let defBuff = 1.0;
+                target.activeBuffs.forEach(b => {
+                    if (b.stat === 'defense') defBuff += b.value;
+                });
+                targetDef *= defBuff;
+
+                const effectiveDef = Math.max(0, targetDef * (1 - defPen / 100));
+
+                // Crit Check
+                const critRate = attacker.stats.critRate || 5;
+                const isCrit = Math.random() * 100 < critRate;
+                const critDmg = attacker.stats.critDmg || 150;
+
+                // Base Dmg
+                let rawDmg = Math.max(1, effectiveAtk - effectiveDef);
+
+                // Apply Crit
+                if (isCrit) {
+                    rawDmg = Math.floor(rawDmg * (critDmg / 100));
+                }
+
+                target.currentHp -= Math.floor(rawDmg);
+
+                const critText = isCrit ? " [CRIT!]" : "";
+                const typeText = isCounter ? " (Counter)" : "";
+                // Shorten log
+                // log.push(`${attacker.name}${typeText} -> ${target.name}: ${Math.floor(rawDmg)}${critText}`);
+
+                if (target.currentHp <= 0) {
+                    log.push(`${target.name} defeated!`);
+                }
+
+                // Counter Logic
+                // Check if target has 100% counter from skill
+                let forceCounter = false;
+                target.activeBuffs.forEach(b => { if (b.counter) forceCounter = true; });
+
+                if (!isCounter && target.currentHp > 0) {
+                    const counterRate = target.stats.counterRate || 0;
+                    if (forceCounter || Math.random() * 100 < counterRate) {
+                        log.push(`${target.name} counter-attacks!`);
+                        performAttack(target, attacker, true);
+                    }
+                }
+            };
+
+            while (allies.some(a => a.currentHp > 0) && enemies.some(e => e.currentHp > 0)) {
+                // Sort by speed
                 const allUnits = [...allies, ...enemies].sort((a, b) => b.stats.speed - a.stats.speed);
 
                 for (const unit of allUnits) {
                     if (unit.currentHp <= 0) continue;
 
-                    const targets = unit.team === 'ally' ? enemies : allies;
-                    const liveTargets = targets.filter(t => t.currentHp > 0);
+                    // 1. Tick Buffs/Cooldowns
+                    unit.activeBuffs = unit.activeBuffs.map(b => ({ ...b, duration: b.duration - 1 })).filter(b => b.duration >= 0);
+
+                    // Cooldown Management (Turn Based)
+                    if (unit.cooldowns.skill1 > 0) unit.cooldowns.skill1--;
+                    if (unit.cooldowns.skill2 > 0) unit.cooldowns.skill2--;
+
+                    // Regen
+                    if (unit.stats.regen > 0 && unit.currentHp < unit.maxHp) {
+                        const heal = Math.min(unit.maxHp - unit.currentHp, unit.stats.regen);
+                        unit.currentHp += heal;
+                    }
+
+                    // 2. Control Effects (Stun)
+                    const isStunned = unit.activeBuffs.some(b => b.status === 'stun');
+                    if (isStunned) {
+                        log.push(`${unit.name} is Stunned and skips turn!`);
+                        continue; // Skip Action Phase
+                    }
+
+                    // 3. Skill Check (Priority: S2 > S1 > Attack)
+                    let activeSkill = null;
+                    let targets = unit.team === 'ally' ? enemies : allies;
+                    let liveTargets = targets.filter(t => t.currentHp > 0);
 
                     if (liveTargets.length === 0) break;
 
-                    const target = liveTargets[Math.floor(Math.random() * liveTargets.length)];
+                    // Skill Logic: Check Cooldowns
+                    if (unit.skills.skill2 && unit.cooldowns.skill2 === 0) {
+                        activeSkill = unit.skills.skill2;
+                        unit.cooldowns.skill2 = activeSkill.spCost; // Set CD to Cost
+                        log.push(`${unit.name} uses ${activeSkill.name}!`);
+                    } else if (unit.skills.skill1 && unit.cooldowns.skill1 === 0) {
+                        activeSkill = unit.skills.skill1;
+                        unit.cooldowns.skill1 = activeSkill.spCost; // Set CD to Cost
+                        log.push(`${unit.name} uses ${activeSkill.name}!`);
+                    }
 
-                    // DMG Formula
-                    const dmg = Math.max(1, unit.stats.attack - target.stats.defense);
-                    target.currentHp -= dmg;
+                    // 4. Execute Action
+                    if (activeSkill) {
+                        const eff = activeSkill.effect;
 
-                    log.push(`${unit.name || (unit.baseId ? state.inventory.find(i => i.uid === unit.uid)?.baseId : 'Enemy')} hit ${target.name} for ${dmg} DMG!`);
+                        // Apply Self Buffs
+                        if (eff.type === 'buff_temp') {
+                            unit.activeBuffs.push({
+                                stat: eff.stat,
+                                value: eff.value,
+                                duration: eff.duration || 1,
+                                counter: eff.counter
+                            });
+                        }
 
-                    if (target.currentHp <= 0) {
-                        log.push(`${target.name} was defeated!`);
+                        // Determine Targets
+                        let skillTargets = [liveTargets[Math.floor(Math.random() * liveTargets.length)]];
+                        if (eff.target === 'enemy_all') skillTargets = liveTargets;
+                        if (eff.targets && eff.targets > 1) {
+                            skillTargets = [...liveTargets].sort(() => 0.5 - Math.random()).slice(0, eff.targets);
+                        }
+
+                        // Execute Damage / Hits
+                        if (eff.type === 'damage_mult' || eff.type === 'multi_hit') {
+                            const mult = eff.value || 1.0;
+                            const hits = eff.count || 1;
+
+                            skillTargets.forEach(t => {
+                                // Apply Status Effects (e.g., Stun)
+                                if (eff.status && t.currentHp > 0) {
+                                    t.activeBuffs.push({
+                                        status: eff.status,
+                                        duration: eff.duration || 1
+                                    });
+                                    log.push(`${t.name} is ${eff.status}ed!`);
+                                }
+
+                                for (let i = 0; i < hits; i++) {
+                                    if (t.currentHp > 0) performAttack(unit, t, false, mult);
+                                }
+                            });
+                        }
+
+                    } else {
+                        // Basic Attack
+                        const target = liveTargets[Math.floor(Math.random() * liveTargets.length)];
+                        performAttack(unit, target);
+
+                        // Double Hit
+                        if (unit.currentHp > 0 && target.currentHp > 0) {
+                            const doubleHit = unit.stats.doubleHit || 0;
+                            if (Math.random() * 100 < doubleHit) {
+                                performAttack(unit, target);
+                            }
+                        }
                     }
                 }
 
-                // Force update log occasionally or at end
                 round++;
-                if (round > 50) break; // Safety break
+                if (round > 50) break;
             }
 
             setBattleLog(log);
@@ -193,7 +372,6 @@ export function BattleScreen({ isPvp, playerSquadOverride, enemySquadOverride, o
             }
         };
 
-        // Run simulation with a slight delay to let UI transition
         const timer = setTimeout(battleLoop, 1000);
         return () => clearTimeout(timer);
 

@@ -2,7 +2,7 @@ import React from 'react';
 import { useGame } from '../../context/GameContext';
 import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
-import { Home, Users, Sword, Menu, Activity, User, Zap, Package, Ticket, LogOut } from 'lucide-react';
+import { Home, Users, Sword, Menu, Activity, User, Zap, Package, Ticket, LogOut, Beaker } from 'lucide-react';
 import clsx from 'clsx';
 
 // Navigation Items
@@ -11,6 +11,7 @@ const NAV_ITEMS = [
     { id: 'roster', label: 'OPERATORS', icon: User },
     { id: 'battle', label: 'BATTLE', icon: Sword },
     { id: 'arena', label: 'ARENA', icon: Activity },
+    { id: 'lab', label: 'BASE', icon: Beaker },
     { id: 'depot', label: 'DEPOT', icon: Package },
 ];
 

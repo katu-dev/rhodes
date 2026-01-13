@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { GameProvider } from './context/GameContext';
 import { AppLayout } from './components/layout/AppLayout';
+import { LabScreen } from './components/game/LabScreen';
 import { GachaScreen } from './components/game/GachaScreen';
 import { CharacterList } from './components/game/CharacterList';
 import { ArenaScreen } from './components/game/ArenaScreen';
@@ -46,13 +47,13 @@ function GameContent() {
   const [isRegistering, setIsRegistering] = useState(false);
   const [currentTab, setCurrentTab] = useState(() => {
     const hash = window.location.hash.replace('#', '');
-    return ['summon', 'roster', 'battle', 'arena', 'depot'].includes(hash) ? hash : 'summon';
+    return ['summon', 'roster', 'battle', 'arena', 'depot', 'lab'].includes(hash) ? hash : 'summon';
   });
 
   React.useEffect(() => {
     const handleHashChange = () => {
       const hash = window.location.hash.replace('#', '');
-      if (['summon', 'roster', 'battle', 'arena', 'depot'].includes(hash)) {
+      if (['summon', 'roster', 'battle', 'arena', 'depot', 'lab'].includes(hash)) {
         setCurrentTab(hash);
       }
     };
@@ -94,6 +95,7 @@ function GameContent() {
           {currentTab === 'battle' && <BattleScreen />}
           {currentTab === 'arena' && <ArenaScreen />}
           {currentTab === 'depot' && <InventoryScreen />}
+          {currentTab === 'lab' && <LabScreen />}
         </div>
       </AppLayout>
     </GameProvider>

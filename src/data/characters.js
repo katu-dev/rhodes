@@ -8,6 +8,10 @@ import skadiImg from '../assets/characters/skadi.png';
 import surtrImg from '../assets/characters/surtr.png';
 import vulpisfogliaImg from '../assets/characters/vulpisfoglia.png';
 import wImg from '../assets/characters/w.png';
+import duskImg from '../assets/characters/dusk.jpg';
+import exusiaiImg from '../assets/characters/exusiai.jpg';
+import lapplandImg from '../assets/characters/lappland.jpg';
+import nianImg from '../assets/characters/nian.png';
 
 // Configuration Flag
 const ENABLE_TEST_CHARACTERS = false;
@@ -88,6 +92,167 @@ const ALL_CHARACTERS = [
 
   // END TEST CHARACTERS
 
+
+  {
+    id: 'char_dusk',
+    name: 'Dusk',
+    description: 'A painter who can bring her creations to life. Reclusive and mysterious.',
+    stats: {
+      attack: 90,
+      defense: 20,
+      health: 180,
+      speed: 12
+    },
+    rarity: 6,
+    class: 'Caster',
+    image: duskImg,
+    skills: {
+      passive: {
+        name: "Ink Spirit",
+        description: "Summons a 'Freeling' to block enemies. (Simplified: +15% Defense)",
+        type: "passive",
+        effect: { type: "buff_stat_flat", stat: "defense", value: 15 }
+      },
+      skill1: {
+        name: "Finishing Touch",
+        description: "Deals 200% Arts damage to next attack.",
+        type: "active",
+        spCost: 4,
+        cooldown: 0,
+        trigger: "auto",
+        effect: { type: "damage_mult", value: 2.0, target: "enemy_single" }
+      },
+      skill2: {
+        name: "Image of Daybreak",
+        description: "Attack range expands and attacks all enemies for 3 turns. (Simplified: AoE Attack)",
+        type: "active",
+        spCost: 10,
+        cooldown: 0,
+        trigger: "auto",
+        effect: { type: "damage_mult", value: 1.5, target: "enemy_all" }
+      }
+    }
+  },
+  {
+    id: 'char_exusiai',
+    name: 'Exusiai',
+    description: 'A cheerful Sancta skilled with firearms. Provides overwhelming covering fire.',
+    stats: {
+      attack: 75,
+      defense: 20,
+      health: 170,
+      speed: 25
+    },
+    rarity: 6,
+    class: 'Sniper',
+    image: exusiaiImg,
+    skills: {
+      passive: {
+        name: "Fast Cartridge",
+        description: "Attack Speed +10.",
+        type: "passive",
+        effect: { type: "buff_stat_flat", stat: "speed", value: 10 }
+      },
+      skill1: {
+        name: "Charging Mode",
+        description: "Next attack hits 3 times.",
+        type: "active",
+        spCost: 3,
+        cooldown: 0,
+        trigger: "auto",
+        effect: { type: "multi_hit", count: 3, value: 1.0, target: "enemy_single" }
+      },
+      skill2: {
+        name: "Overloading Mode",
+        description: "Attacks hit 5 times with reduced damage for this turn.",
+        type: "active",
+        spCost: 5,
+        cooldown: 0,
+        trigger: "auto",
+        effect: { type: "multi_hit", count: 5, value: 0.9, target: "enemy_single" }
+      }
+    }
+  },
+  {
+    id: 'char_lappland',
+    name: 'Lappland',
+    description: 'A dangerous Siracusan wolf with a dual-wielding style and a manic grin.',
+    stats: {
+      attack: 80,
+      defense: 35,
+      health: 230,
+      speed: 16
+    },
+    rarity: 5,
+    class: 'Guard',
+    image: lapplandImg,
+    skills: {
+      passive: {
+        name: "Spiritual Destruction",
+        description: "Attacks disable enemy passive abilities. (Simplified: +10% Attack)",
+        type: "passive",
+        effect: { type: "buff_stat_flat", stat: "attack", value: 10 }
+      },
+      skill1: {
+        name: "Sundial",
+        description: "Attack +40% and 15% physical dodge.",
+        type: "active",
+        spCost: 0,
+        cooldown: 4, // Usage: Cooldown based
+        trigger: "auto",
+        effect: { type: "buff_temp", stat: "attack", value: 0.4, duration: 1 }
+      },
+      skill2: {
+        name: "Wolf Spirit",
+        description: "Attacks turn into Arts damage and hit 2 targets.",
+        type: "active",
+        spCost: 6,
+        cooldown: 0,
+        trigger: "auto",
+        effect: { type: "buff_temp", stat: "attack", value: 0.8, duration: 1, targets: 2 }
+      }
+    }
+  },
+  {
+    id: 'char_nian',
+    name: 'Nian',
+    description: 'An idle deity from Yan who enjoys metallurgy and spicy food. Extremely durable.',
+    stats: {
+      attack: 60,
+      defense: 80,
+      health: 400,
+      speed: 10
+    },
+    rarity: 6,
+    class: 'Defender',
+    image: nianImg,
+    skills: {
+      passive: {
+        name: "Metallurgy",
+        description: "+20% Max HP.",
+        type: "passive",
+        effect: { type: "buff_stat_mult", stat: "health", value: 0.2 }
+      },
+      skill1: {
+        name: "Tin Fire",
+        description: "Defense +50%, deals Arts damage to attackers.",
+        type: "active",
+        spCost: 5,
+        cooldown: 0,
+        trigger: "auto",
+        effect: { type: "buff_temp", stat: "defense", value: 0.5, duration: 1 }
+      },
+      skill2: {
+        name: "Copper Seal",
+        description: "Stop attacking. Defense +80%, Resist +50%. Counter-attack everyone.",
+        type: "active",
+        spCost: 8,
+        cooldown: 0,
+        trigger: "auto",
+        effect: { type: "buff_temp", stat: "defense", value: 0.8, counter: 100, duration: 1 }
+      }
+    }
+  },
   {
     id: 'heidi',
     name: 'Heidi',
@@ -196,7 +361,33 @@ const ALL_CHARACTERS = [
     stats: { attack: 28, defense: 12, health: 110, speed: 18 },
     rarity: 1,
     element: 'Fire',
-    image: wImg
+    image: wImg,
+    skills: {
+      passive: {
+        name: "Insult to Injury",
+        description: "Deals 20% more damage to stunned enemies.",
+        type: "passive",
+        effect: { type: "buff_damage_cond", value: 20, condition: "status_stun" }
+      },
+      skill1: {
+        name: "King of Hearts",
+        description: "Next attack deals 250% damage.",
+        type: "active",
+        spCost: 4,
+        cooldown: 0,
+        trigger: "auto",
+        effect: { type: "damage_mult", value: 2.5, target: "enemy_single" }
+      },
+      skill2: {
+        name: "D12",
+        description: "Deals 300% AoE damage and Stuns enemies for 1 turn.",
+        type: "active",
+        spCost: 6,
+        cooldown: 0,
+        trigger: "auto",
+        effect: { type: "damage_mult", value: 3.0, target: "enemy_all", status: "stun", duration: 1 }
+      }
+    }
   }
 ];
 
@@ -214,3 +405,14 @@ export const STAR_COLORS = {
 };
 
 export const MAX_STARS = 25;
+export const MAX_LEVEL = 50;
+
+export const BASE_STATS = {
+  critRate: 5,      // 5%
+  critDmg: 150,     // 150%
+  defPen: 0,        // 0%
+  regen: 0,         // Flat HP/turn
+  evasion: 0,       // 0%
+  doubleHit: 0,     // 0%
+  counterRate: 0    // 0%
+};

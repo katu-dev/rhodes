@@ -2,7 +2,7 @@ import { useGame } from '../../context/GameContext';
 import { CHARACTERS } from '../../data/characters';
 import { Button, Card, StarDisplay } from '../ui/Components';
 import { motion } from 'framer-motion';
-import { Shield, Swords, Heart, Zap, User } from 'lucide-react';
+import { Shield, Swords, Heart, Zap, User, Star } from 'lucide-react';
 import clsx from 'clsx';
 import { CharacterDetail } from './CharacterDetail';
 import { useState } from 'react';
@@ -60,8 +60,12 @@ export const CharacterList = () => {
                                         src={baseData.image}
                                         className="w-full h-full object-cover filter grayscale group-hover:grayscale-0 transition-all duration-300 scale-110 group-hover:scale-125"
                                     />
-                                    <div className="absolute top-1 left-1 bg-black/80 text-[10px] font-bold px-1 text-white border border-white/10">
-                                        LV.{char.stars}
+                                    <div className="absolute top-1 left-1 bg-black/80 text-[10px] font-bold px-1 text-white border border-white/10 flex items-center gap-1">
+                                        <span>LV.{char.level || 1}</span>
+                                        <div className="flex items-center text-yellow-400">
+                                            <Star size={8} fill="currentColor" />
+                                            <span className="ml-0.5">{char.stars}</span>
+                                        </div>
                                     </div>
                                 </div>
 

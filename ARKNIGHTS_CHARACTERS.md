@@ -391,7 +391,7 @@
 | Warmy | Caster | Primcaster | No |
 | Weedy | Specialist | Pusher | No |
 | Whislash | Guard | Instructor | No |
-| Whisperain | Medic | Healer | No |
+| Whisperain | Medic | Healer | No |2005
 | Wild Mane | Vanguard | Charger | No |
 | Wind Chimes | Guard | Crusher | No |
 | Windflit | Supporter | Craftsman | No |

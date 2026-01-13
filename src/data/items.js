@@ -15,7 +15,7 @@ export const ITEMS = [
         name: 'Plasma Blade',
         type: 'equipment',
         slot: 'weapon',
-        stats: { attack: 10, speed: 2 },
+        stats: { attack: 150, speed: 2 },
         rarity: 'common'
     },
     {
@@ -23,7 +23,7 @@ export const ITEMS = [
         name: 'Gravity Hammer',
         type: 'equipment',
         slot: 'weapon',
-        stats: { attack: 25, speed: -5 },
+        stats: { attack: 450, speed: -5 },
         rarity: 'rare'
     },
 
@@ -33,7 +33,7 @@ export const ITEMS = [
         name: 'Tactical Visor',
         type: 'equipment',
         slot: 'head',
-        stats: { defense: 2, attack: 2 },
+        stats: { defense: 40, attack: 20 },
         rarity: 'common'
     },
 
@@ -43,7 +43,7 @@ export const ITEMS = [
         name: 'Nanofiber Vest',
         type: 'equipment',
         slot: 'chest',
-        stats: { defense: 10, health: 20 },
+        stats: { defense: 120, health: 300 },
         rarity: 'common'
     },
 
@@ -53,7 +53,7 @@ export const ITEMS = [
         name: 'Plated Greaves',
         type: 'equipment',
         slot: 'legs',
-        stats: { defense: 8, speed: -1 },
+        stats: { defense: 80, speed: -2 },
         rarity: 'common'
     },
 
@@ -63,7 +63,7 @@ export const ITEMS = [
         name: 'Rocket Boots',
         type: 'equipment',
         slot: 'feet',
-        stats: { speed: 10 },
+        stats: { speed: 45 },
         rarity: 'rare'
     },
 
@@ -73,7 +73,7 @@ export const ITEMS = [
         name: 'Energy Bracers',
         type: 'equipment',
         slot: 'arms',
-        stats: { defense: 5 },
+        stats: { defense: 60 },
         rarity: 'common'
     },
 
@@ -83,9 +83,23 @@ export const ITEMS = [
         name: 'Grip Gloves',
         type: 'equipment',
         slot: 'hands',
-        stats: { attack: 3, speed: 1 },
+        stats: { attack: 40, speed: 5 },
         rarity: 'common'
     }
+];
+
+export const SUBSTAT_POOL = [
+    { stat: 'attack', min: 10, max: 40 },
+    { stat: 'defense', min: 5, max: 20 },
+    { stat: 'health', min: 50, max: 200 },
+    { stat: 'speed', min: 1, max: 5 },
+    { stat: 'critRate', min: 2, max: 8 },
+    { stat: 'critDmg', min: 5, max: 20 },
+    { stat: 'defPen', min: 2, max: 10 },
+    { stat: 'regen', min: 10, max: 50 },
+    { stat: 'evasion', min: 1, max: 5 },
+    { stat: 'doubleHit', min: 1, max: 5 },
+    { stat: 'counterRate', min: 2, max: 8 }
 ];
 
 export const MATERIALS = [

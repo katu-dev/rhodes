@@ -80,8 +80,17 @@ const TabButton = ({ active, onClick, icon: Icon, label }) => (
 );
 
 const ItemCard = ({ item, inventory }) => {
+    const { dispatch, state } = useGame();
     const isEquip = item.type === 'equipment';
     const isRare = item.rarity === 'rare' || item.rarity === 'epic';
+    const level = item.level || 0;
+    const upgradeCost = (level + 1) * 500;
+    const canUpgrade = isEquip && level < 10 && state.currency >= upgradeCost;
+
+    const handleUpgrade = (e) => {
+        e.stopPropagation();
+        dispatch({ type: 'UPGRADE_ITEM', payload: { itemUid: item.uid } });
+    };
 
     return (
         <motion.div
@@ -105,10 +114,19 @@ const ItemCard = ({ item, inventory }) => {
                         <Database className="w-4 h-4" />
                     )}
                 </div>
-                {item.count > 1 && (
+                {item.count > 1 ? (
                     <div className="px-1.5 py-0.5 bg-zinc-800 text-[10px] font-mono font-bold text-zinc-300">
                         x{item.count}
                     </div>
+                ) : (
+                    isEquip && (
+                        <div className={clsx(
+                            "px-1.5 py-0.5 text-[10px] font-mono font-bold border",
+                            level > 0 ? "bg-tech-primary/10 text-tech-primary border-tech-primary/30" : "bg-zinc-900 text-zinc-500 border-zinc-800"
+                        )}>
+                            +{level}
+                        </div>
+                    )
                 )}
             </div>
 
@@ -128,7 +146,19 @@ const ItemCard = ({ item, inventory }) => {
                     {Object.entries(item.stats).map(([key, val]) => (
                         <div key={key} className="flex justify-between text-[9px] font-mono text-zinc-400">
                             <span className="uppercase">{key.substring(0, 3)}</span>
-                            <span className={val > 0 ? "text-tech-success" : "text-tech-error"}>{val > 0 ? '+' : ''}{val}</span>
+                            <span className={val > 0 ? "text-tech-success" : "text-tech-error"}>
+                                {val > 0 ? '+' : ''}{Math.floor(val * (1 + level * 0.1))}
+                            </span>
+                        </div>
+                    ))}
+                    {/* Substats */}
+                    {item.substats && item.substats.map((sub, idx) => (
+                        <div key={`sub-${idx}`} className="col-span-2 flex justify-between text-[9px] font-mono text-tech-accent">
+                            <span className="uppercase flex items-center gap-1">
+                                <span className="w-1 h-1 rounded-full bg-tech-accent"></span>
+                                {sub.stat}
+                            </span>
+                            <span>+{sub.value}</span>
                         </div>
                     ))}
                 </div>
@@ -138,6 +168,30 @@ const ItemCard = ({ item, inventory }) => {
             {!isEquip && item.description && (
                 <div className="mt-2 text-[9px] text-zinc-600 line-clamp-3 leading-tight">
                     {item.description}
+                </div>
+            )}
+
+            {/* Upgrade Button */}
+            {isEquip && (
+                <div className="mt-2 pt-2 border-t border-zinc-800/50 flex justify-between items-center">
+                    {level < 10 ? (
+                        <button
+                            onClick={handleUpgrade}
+                            disabled={!canUpgrade}
+                            className={clsx(
+                                "w-full py-1 text-[9px] font-bold uppercase tracking-wider transition-colors",
+                                canUpgrade
+                                    ? "bg-zinc-800 hover:bg-tech-primary hover:text-black text-zinc-400"
+                                    : "bg-zinc-900 text-zinc-700 cursor-not-allowed"
+                            )}
+                        >
+                            UPGRADE ({upgradeCost}G)
+                        </button>
+                    ) : (
+                        <div className="w-full text-center text-[9px] font-bold text-tech-accent uppercase">
+                            MAX LEVEL
+                        </div>
+                    )}
                 </div>
             )}
 
