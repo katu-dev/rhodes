@@ -4,6 +4,7 @@ import { AppLayout } from './components/layout/AppLayout';
 import { GachaScreen } from './components/game/GachaScreen';
 import { CharacterList } from './components/game/CharacterList';
 import { ArenaScreen } from './components/game/ArenaScreen';
+import { BattleScreen } from './components/game/BattleScreen';
 import { InventoryScreen } from './components/game/InventoryScreen';
 
 import React from 'react';
@@ -48,6 +49,7 @@ function App() {
           <div className="h-full w-full animate-in fade-in duration-300">
             {currentTab === 'summon' && <GachaScreen />}
             {currentTab === 'roster' && <CharacterList />}
+            {currentTab === 'battle' && <BattleScreen />}
             {currentTab === 'arena' && <ArenaScreen />}
             {currentTab === 'depot' && <InventoryScreen />}
           </div>

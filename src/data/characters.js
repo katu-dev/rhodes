@@ -1,4 +1,7 @@
+import heidiImg from '../assets/characters/heidi.png';
 import texasImg from '../assets/characters/texas.png';
+import virtuosaImg from '../assets/characters/virtuosa.png';
+import reedImg from '../assets/characters/reed.png';
 
 // Configuration Flag
 const ENABLE_TEST_CHARACTERS = false;
@@ -79,6 +82,48 @@ const ALL_CHARACTERS = [
 
   // END TEST CHARACTERS
 
+  {
+    id: 'heidi',
+    name: 'Heidi',
+    description: 'Heidi is a powerful warrior who wields a sword of pure light.',
+    stats: {
+      attack: 15,
+      defense: 25,
+      health: 120,
+      speed: 10
+    },
+    rarity: 1,
+    element: 'Dark',
+    image: heidiImg
+  },
+  {
+    id: 'virtuosa',
+    name: 'Virtuosa',
+    description: 'Virtuosa is a powerful warrior who wields a sword of pure light.',
+    stats: {
+      attack: 20,
+      defense: 25,
+      health: 120,
+      speed: 10
+    },
+    rarity: 1,
+    element: 'Tech',
+    image: virtuosaImg
+  },
+  {
+    id: 'reed',
+    name: 'Reed',
+    description: 'Reed is a powerful warrior who wields a sword of pure light.',
+    stats: {
+      attack: 10,
+      defense: 5,
+      health: 100,
+      speed: 20
+    },
+    rarity: 1,
+    element: 'Light',
+    image: reedImg
+  },
   {
     id: 'texas',
     name: 'Texas',

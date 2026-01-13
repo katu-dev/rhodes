@@ -1,20 +1,15 @@
 import { createContext, useContext, useReducer, useEffect } from 'react';
 import { CHARACTERS, MAX_STARS } from '../data/characters';
 import { ITEMS, MATERIALS } from '../data/items';
+import { ENEMIES } from '../data/enemies';
 
 const GameContext = createContext();
 
 const INITIAL_STATE = {
-    currency: 1000, // Starting currency
+    currency: 1000, // Starting currency (Gold)
+    headhuntTickets: 5, // Starting Headhunt Tickets
     inventory: [], // Array of OwnedCharacter objects
-    items: [
-        // Test Items
-        { ...ITEMS[0], uid: 'test_wep_1', count: 1 },
-        { ...ITEMS[3], uid: 'test_chest_1', count: 1 },
-        { ...MATERIALS[0], uid: 'test_mat_1', count: 10 },
-        { ...MATERIALS[1], uid: 'test_mat_2', count: 5 },
-        { ...MATERIALS[3], uid: 'test_mat_3', count: 1 },
-    ],
+    items: [], // Empty items by default
     arenaRoster: [], // Array of inventory IDs
     lastTick: Date.now(),
 };
@@ -131,8 +126,41 @@ const gameReducer = (state, action) => {
 
             return {
                 ...state,
-                currency: state.currency - cost,
+                headhuntTickets: state.headhuntTickets - cost,
                 inventory: newInventory
+            };
+        }
+
+        case 'BATTLE_WIN': {
+            const { drops } = action.payload; // drops: { items: [], materials: [], tickets: number, currency: number }
+
+            // Add tickets
+            let newTickets = state.headhuntTickets + (drops.tickets || 0);
+            let newCurrency = state.currency + (drops.currency || 0);
+
+            // Add Items/Materials
+            let newItems = [...state.items];
+            if (drops.items) {
+                drops.items.forEach(newItem => {
+                    newItems.push({ ...newItem, uid: Date.now() + Math.random().toString(), count: 1 });
+                });
+            }
+            if (drops.materials) {
+                drops.materials.forEach(newMat => {
+                    const existingMat = newItems.find(i => i.id === newMat.id);
+                    if (existingMat) {
+                        existingMat.count += (newMat.count || 1);
+                    } else {
+                        newItems.push({ ...newMat, uid: Date.now() + Math.random().toString(), count: (newMat.count || 1) });
+                    }
+                });
+            }
+
+            return {
+                ...state,
+                headhuntTickets: newTickets,
+                currency: newCurrency,
+                items: newItems
             };
         }
 
@@ -177,13 +205,13 @@ const gameReducer = (state, action) => {
 export const GameProvider = ({ children }) => {
     const [state, dispatch] = useReducer(gameReducer, INITIAL_STATE, (initial) => {
         // Load from local storage if available
-        const saved = localStorage.getItem('gacha_save');
+        const saved = localStorage.getItem('gacha_save_v2');
         return saved ? JSON.parse(saved) : initial;
     });
 
     // Persist save
     useEffect(() => {
-        localStorage.setItem('gacha_save', JSON.stringify(state));
+        localStorage.setItem('gacha_save_v2', JSON.stringify(state));
     }, [state]);
 
     // Passive Income Ticker

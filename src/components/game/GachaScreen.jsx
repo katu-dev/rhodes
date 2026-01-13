@@ -6,7 +6,7 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Zap, Terminal, Search, ChevronRight, X } from 'lucide-react';
 import clsx from 'clsx';
 
-const SUMMON_COST = 100;
+const SUMMON_COST = 1; // 1 Ticket per pull
 
 export const GachaScreen = () => {
     const { state, dispatch } = useGame();
@@ -14,7 +14,7 @@ export const GachaScreen = () => {
     const [pullResult, setPullResult] = useState(null);
 
     const handleSummon = () => {
-        if (state.currency < SUMMON_COST) return;
+        if (state.headhuntTickets < SUMMON_COST) return;
 
         setIsPulling(true);
         setPullResult(null);
@@ -80,11 +80,11 @@ export const GachaScreen = () => {
 
                                 <div className="space-y-4">
                                     <div className="text-4xl font-bold text-white tabular-nums tracking-widest">
-                                        {SUMMON_COST} <span className="text-sm text-zinc-500">LMD</span>
+                                        {SUMMON_COST} <span className="text-sm text-zinc-500">TICKET</span>
                                     </div>
                                     <Button
                                         onClick={handleSummon}
-                                        disabled={state.currency < SUMMON_COST}
+                                        disabled={state.headhuntTickets < SUMMON_COST}
                                         size="lg"
                                         className="w-full"
                                     >

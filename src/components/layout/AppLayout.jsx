@@ -1,14 +1,15 @@
 import React from 'react';
 import { useGame } from '../../context/GameContext';
 import { motion } from 'framer-motion';
-import { Home, Users, Sword, Menu, Activity, User, Zap, Package } from 'lucide-react';
+import { Home, Users, Sword, Menu, Activity, User, Zap, Package, Ticket } from 'lucide-react';
 import clsx from 'clsx';
 
 // Navigation Items
 const NAV_ITEMS = [
     { id: 'summon', label: 'RECRUIT', icon: Users },
     { id: 'roster', label: 'OPERATORS', icon: User },
-    { id: 'arena', label: 'MISSIONS', icon: Sword },
+    { id: 'battle', label: 'BATTLE', icon: Sword },
+    { id: 'arena', label: 'ARENA', icon: Activity },
     { id: 'depot', label: 'DEPOT', icon: Package },
 ];
 
@@ -74,6 +75,15 @@ export const AppLayout = ({ children, currentTab, onTabChange }) => {
                                 {state.currency.toLocaleString()}
                             </span>
                             <span className="text-xs text-zinc-500 font-bold">LMD</span>
+                        </div>
+
+                        {/* Ticket Display */}
+                        <div className="flex items-center gap-3 bg-black/40 px-4 py-2 border border-tech-border clip-angle-inv">
+                            <Ticket className="w-4 h-4 text-red-500" />
+                            <span className="font-mono font-bold text-xl tracking-widest text-white">
+                                {state.headhuntTickets || 0}
+                            </span>
+                            <span className="text-xs text-zinc-500 font-bold">PMT</span>
                         </div>
                     </div>
                 </header>
