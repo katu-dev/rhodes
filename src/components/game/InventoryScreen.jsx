@@ -1,9 +1,10 @@
 import { useState } from 'react';
 import { useGame } from '../../context/GameContext';
 import { motion, AnimatePresence } from 'framer-motion';
-import { Box, Package, Shield, Swords, Layers, Database } from 'lucide-react';
+import { Box, Package, Shield, Swords, Layers, Database, User } from 'lucide-react';
 import clsx from 'clsx';
 import { Button } from '../ui/Components';
+import { CHARACTERS } from '../../data/characters';
 
 export const InventoryScreen = () => {
     const { state } = useGame();
@@ -55,7 +56,7 @@ export const InventoryScreen = () => {
                     </div>
                 ) : (
                     displayedItems.map((item) => (
-                        <ItemCard key={item.uid} item={item} />
+                        <ItemCard key={item.uid} item={item} inventory={state.inventory} />
                     ))
                 )}
             </div>
@@ -78,7 +79,7 @@ const TabButton = ({ active, onClick, icon: Icon, label }) => (
     </button>
 );
 
-const ItemCard = ({ item }) => {
+const ItemCard = ({ item, inventory }) => {
     const isEquip = item.type === 'equipment';
     const isRare = item.rarity === 'rare' || item.rarity === 'epic';
 
@@ -137,6 +138,21 @@ const ItemCard = ({ item }) => {
             {!isEquip && item.description && (
                 <div className="mt-2 text-[9px] text-zinc-600 line-clamp-3 leading-tight">
                     {item.description}
+                </div>
+            )}
+
+            {/* Used By Badge */}
+            {isEquip && item.equippedBy && inventory && (
+                <div className="mt-2 pt-2 border-t border-zinc-800/50">
+                    <div className="text-[9px] text-yellow-600 font-mono flex items-center gap-1">
+                        <User size={10} />
+                        <span>
+                            USED BY {(() => {
+                                const owner = inventory.find(c => c.uid === item.equippedBy);
+                                return owner ? CHARACTERS.find(c => c.id === owner.baseId)?.name : 'UNKNOWN';
+                            })()}
+                        </span>
+                    </div>
                 </div>
             )}
 

@@ -169,16 +169,86 @@ const gameReducer = (state, action) => {
             const charIndex = state.inventory.findIndex(c => c.uid === charId);
             if (charIndex === -1) return state;
 
-            const newInventory = [...state.inventory];
+            let newInventory = [...state.inventory];
+            let newItems = [...state.items];
+
+            // 1. Check if item is already equipped by ANYONE (Search Inventory Source of Truth)
+            // This prevents duplication if item metadata is stale
+            for (let i = 0; i < newInventory.length; i++) {
+                const char = newInventory[i];
+                if (!char.equipment) continue;
+
+                // Check all slots of this character
+                for (const [equipSlot, equipItem] of Object.entries(char.equipment)) {
+                    if (equipItem && equipItem.uid === item.uid) {
+                        // Found the item! Unequip it.
+                        // Note: If charId === char.uid, we are just moving slots or re-equipping, which is fine to unequip first
+                        newInventory[i] = {
+                            ...char,
+                            equipment: {
+                                ...char.equipment,
+                                [equipSlot]: null
+                            }
+                        };
+                    }
+                }
+            }
+
+            // 2. Equip to new owner
+            // Re-fetch charIndex because we might have modified newInventory array above
+            const updatedCharIndex = newInventory.findIndex(c => c.uid === charId);
+
+            newInventory[updatedCharIndex] = {
+                ...newInventory[updatedCharIndex],
+                equipment: {
+                    ...newInventory[updatedCharIndex].equipment,
+                    [slot]: { ...item, equippedBy: charId }
+                }
+            };
+
+            // 3. Sync Item Metadata for UI
+            const itemIndex = newItems.findIndex(i => i.uid === item.uid);
+            if (itemIndex !== -1) {
+                newItems[itemIndex] = { ...newItems[itemIndex], equippedBy: charId };
+            }
+
+            // Also clear equippedBy for any item that was displaced from this slot ?
+            // No, the displaced item just goes back to inventory (implicitly, as it's no longer in equipment map)
+            // But we should update its metadata in 'items' list to say equippedBy: null
+            // We can't know easily which item was displaced unless we check before overwrite.
+            // But let's assume 'items' list 'equippedBy' is just for display helper. 
+            // The true state is in inventory.
+
+            return { ...state, inventory: newInventory, items: newItems };
+        }
+
+        case 'UNEQUIP_ITEM': {
+            const { charId, slot } = action.payload;
+            const charIndex = state.inventory.findIndex(c => c.uid === charId);
+            if (charIndex === -1) return state;
+
+            let newInventory = [...state.inventory];
+            let newItems = [...state.items];
+
+            const itemToUnequip = newInventory[charIndex].equipment[slot];
+
+            if (itemToUnequip) {
+                // Update global item list
+                const itemIndex = newItems.findIndex(i => i.uid === itemToUnequip.uid);
+                if (itemIndex !== -1) {
+                    newItems[itemIndex] = { ...newItems[itemIndex], equippedBy: null };
+                }
+            }
+
             newInventory[charIndex] = {
                 ...newInventory[charIndex],
                 equipment: {
                     ...newInventory[charIndex].equipment,
-                    [slot]: item
+                    [slot]: null
                 }
             };
 
-            return { ...state, inventory: newInventory };
+            return { ...state, inventory: newInventory, items: newItems };
         }
 
         case 'TOGGLE_ARENA': {
@@ -202,17 +272,24 @@ const gameReducer = (state, action) => {
     }
 };
 
+import { useAuth } from './AuthContext';
+
 export const GameProvider = ({ children }) => {
+    const { user } = useAuth();
+    const saveKey = user ? `gacha_save_${user.id}` : 'gacha_save_guest';
+
     const [state, dispatch] = useReducer(gameReducer, INITIAL_STATE, (initial) => {
         // Load from local storage if available
-        const saved = localStorage.getItem('gacha_save_v2');
+        const saved = localStorage.getItem(saveKey);
         return saved ? JSON.parse(saved) : initial;
     });
 
     // Persist save
     useEffect(() => {
-        localStorage.setItem('gacha_save_v2', JSON.stringify(state));
-    }, [state]);
+        if (state !== INITIAL_STATE) {
+            localStorage.setItem(saveKey, JSON.stringify(state));
+        }
+    }, [state, saveKey]);
 
     // Passive Income Ticker
     useEffect(() => {

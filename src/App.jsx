@@ -6,9 +6,13 @@ import { CharacterList } from './components/game/CharacterList';
 import { ArenaScreen } from './components/game/ArenaScreen';
 import { BattleScreen } from './components/game/BattleScreen';
 import { InventoryScreen } from './components/game/InventoryScreen';
+import { AuthProvider, useAuth } from './context/AuthContext';
+import { LoginScreen } from './components/auth/LoginScreen';
+import { RegisterScreen } from './components/auth/RegisterScreen';
 
 import React from 'react';
 
+// Error Boundary Component
 class ErrorBoundary extends React.Component {
   constructor(props) {
     super(props);
@@ -37,24 +41,71 @@ class ErrorBoundary extends React.Component {
   }
 }
 
-function App() {
-  // Navigation State
-  const [currentTab, setCurrentTab] = useState('summon');
+function GameContent() {
+  const { user, loading } = useAuth();
+  const [isRegistering, setIsRegistering] = useState(false);
+  const [currentTab, setCurrentTab] = useState(() => {
+    const hash = window.location.hash.replace('#', '');
+    return ['summon', 'roster', 'battle', 'arena', 'depot'].includes(hash) ? hash : 'summon';
+  });
+
+  React.useEffect(() => {
+    const handleHashChange = () => {
+      const hash = window.location.hash.replace('#', '');
+      if (['summon', 'roster', 'battle', 'arena', 'depot'].includes(hash)) {
+        setCurrentTab(hash);
+      }
+    };
+
+    // Handle initial hash if present (in case of fresh load with hash)
+    handleHashChange();
+
+    window.addEventListener('hashchange', handleHashChange);
+    return () => window.removeEventListener('hashchange', handleHashChange);
+  }, []);
+
+  const handleTabChange = (tabId) => {
+    window.location.hash = tabId;
+    setCurrentTab(tabId);
+  };
+
+  if (loading) {
+    return (
+      <div className="h-full w-full flex items-center justify-center bg-zinc-950 font-mono text-tech-primary animate-pulse">
+        INITIALIZING...
+      </div>
+    );
+  }
+
+  if (!user) {
+    if (isRegistering) {
+      return <RegisterScreen onLoginClick={() => setIsRegistering(false)} />;
+    }
+    return <LoginScreen onRegisterClick={() => setIsRegistering(true)} />;
+  }
 
   return (
+    <GameProvider>
+      <AppLayout currentTab={currentTab} onTabChange={handleTabChange}>
+        {/* Render Active Screen */}
+        <div className="h-full w-full animate-in fade-in duration-300">
+          {currentTab === 'summon' && <GachaScreen />}
+          {currentTab === 'roster' && <CharacterList />}
+          {currentTab === 'battle' && <BattleScreen />}
+          {currentTab === 'arena' && <ArenaScreen />}
+          {currentTab === 'depot' && <InventoryScreen />}
+        </div>
+      </AppLayout>
+    </GameProvider>
+  );
+}
+
+function App() {
+  return (
     <ErrorBoundary>
-      <GameProvider>
-        <AppLayout currentTab={currentTab} onTabChange={setCurrentTab}>
-          {/* Render Active Screen */}
-          <div className="h-full w-full animate-in fade-in duration-300">
-            {currentTab === 'summon' && <GachaScreen />}
-            {currentTab === 'roster' && <CharacterList />}
-            {currentTab === 'battle' && <BattleScreen />}
-            {currentTab === 'arena' && <ArenaScreen />}
-            {currentTab === 'depot' && <InventoryScreen />}
-          </div>
-        </AppLayout>
-      </GameProvider>
+      <AuthProvider>
+        <GameContent />
+      </AuthProvider>
     </ErrorBoundary>
   );
 }

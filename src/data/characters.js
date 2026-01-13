@@ -2,6 +2,12 @@ import heidiImg from '../assets/characters/heidi.png';
 import texasImg from '../assets/characters/texas.png';
 import virtuosaImg from '../assets/characters/virtuosa.png';
 import reedImg from '../assets/characters/reed.png';
+import lemuenImg from '../assets/characters/lemuen.png';
+import schwarzImg from '../assets/characters/schwarz.png';
+import skadiImg from '../assets/characters/skadi.png';
+import surtrImg from '../assets/characters/surtr.png';
+import vulpisfogliaImg from '../assets/characters/vulpisfoglia.png';
+import wImg from '../assets/characters/w.png';
 
 // Configuration Flag
 const ENABLE_TEST_CHARACTERS = false;
@@ -137,6 +143,60 @@ const ALL_CHARACTERS = [
     rarity: 1,
     element: 'Tech',
     image: texasImg
+  },
+  {
+    id: 'lemuen',
+    name: 'Lemuen',
+    description: 'A sharpshooter from Laterano.',
+    stats: { attack: 25, defense: 10, health: 90, speed: 15 },
+    rarity: 1,
+    element: 'Light',
+    image: lemuenImg
+  },
+  {
+    id: 'schwarz',
+    name: 'Schwarz',
+    description: 'Elite bodyguard and assassin.',
+    stats: { attack: 30, defense: 15, health: 110, speed: 12 },
+    rarity: 1,
+    element: 'Tech',
+    image: schwarzImg
+  },
+  {
+    id: 'skadi',
+    name: 'Skadi',
+    description: 'A powerful Abyssal Hunter.',
+    stats: { attack: 35, defense: 20, health: 150, speed: 10 },
+    rarity: 1,
+    element: 'Cosmic', // Fitting for Abyssal?
+    image: skadiImg
+  },
+  {
+    id: 'surtr',
+    name: 'Surtr',
+    description: 'A mysterious Sarkaz with a fiery blade.',
+    stats: { attack: 40, defense: 10, health: 100, speed: 15 },
+    rarity: 1,
+    element: 'Fire', // Or Dark
+    image: surtrImg
+  },
+  {
+    id: 'vulpisfoglia',
+    name: 'Vulpis',
+    description: 'A cunning operator.',
+    stats: { attack: 15, defense: 15, health: 100, speed: 25 },
+    rarity: 1,
+    element: 'Earth',
+    image: vulpisfogliaImg
+  },
+  {
+    id: 'w',
+    name: 'W',
+    description: 'A volatile mercenary with a love for explosions.',
+    stats: { attack: 28, defense: 12, health: 110, speed: 18 },
+    rarity: 1,
+    element: 'Fire',
+    image: wImg
   }
 ];
 

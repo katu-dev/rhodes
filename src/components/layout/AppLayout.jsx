@@ -1,7 +1,8 @@
 import React from 'react';
 import { useGame } from '../../context/GameContext';
+import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
-import { Home, Users, Sword, Menu, Activity, User, Zap, Package, Ticket } from 'lucide-react';
+import { Home, Users, Sword, Menu, Activity, User, Zap, Package, Ticket, LogOut } from 'lucide-react';
 import clsx from 'clsx';
 
 // Navigation Items
@@ -15,6 +16,7 @@ const NAV_ITEMS = [
 
 export const AppLayout = ({ children, currentTab, onTabChange }) => {
     const { state } = useGame();
+    const { user, logout } = useAuth();
 
     return (
         <div className="h-screen w-screen bg-tech-bg text-zinc-100 flex overflow-hidden font-display bg-tech-grid relative">
@@ -64,7 +66,16 @@ export const AppLayout = ({ children, currentTab, onTabChange }) => {
                 <header className="h-16 flex items-center justify-between px-6 border-b border-tech-border bg-tech-surface/80 backdrop-blur-sm">
                     <div className="flex items-center gap-4">
                         <div className="h-2 w-2 rounded-full bg-emerald-500 animate-pulse"></div>
-                        <span className="font-mono text-sm text-zinc-400">CONNECTED</span>
+                        <span className="font-mono text-sm text-zinc-400">
+                            USER: {user?.username?.toUpperCase() || 'USER'}
+                        </span>
+                        <button
+                            onClick={logout}
+                            className="ml-2 p-1 hover:bg-red-500/20 rounded-full transition-colors group"
+                            title="Disconnect"
+                        >
+                            <LogOut className="w-4 h-4 text-zinc-600 group-hover:text-red-500" />
+                        </button>
                     </div>
 
                     <div className="flex items-center gap-6">

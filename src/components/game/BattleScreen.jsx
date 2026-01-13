@@ -6,7 +6,7 @@ import { ITEMS, MATERIALS } from '../../data/items';
 import { Sword, Shield, Activity, Users, Trophy, Ticket, Coins, Skull } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-export function BattleScreen() {
+export function BattleScreen({ isPvp, playerSquadOverride, enemySquadOverride, onBattleEnd }) {
     const { state, dispatch, calculateStats } = useGame();
     const [selectedSquad, setSelectedSquad] = useState([]);
     const [battleState, setBattleState] = useState('idle'); // idle, fighting, victory, defeat
@@ -14,8 +14,49 @@ export function BattleScreen() {
     const [rewards, setRewards] = useState(null);
     const [currentTurn, setCurrentTurn] = useState(0);
 
+    const scrollContainerRef = React.useRef(null);
+
+    useEffect(() => {
+        const el = scrollContainerRef.current;
+        if (el) {
+            const onWheel = (e) => {
+                if (e.deltaY === 0) return;
+                e.preventDefault();
+                el.scrollLeft += e.deltaY;
+            };
+            el.addEventListener('wheel', onWheel, { passive: false });
+            return () => el.removeEventListener('wheel', onWheel);
+        }
+    }, [battleState]); // Re-bind if battleState changes (though ref should be stable)
+
+    const [autoRestart, setAutoRestart] = useState(false);
+    const [countdown, setCountdown] = useState(null);
+
     // Filter available characters unique by UID
     const roster = state.inventory;
+
+    // ... (toggleUnit, startBattle preserved)
+
+    // Auto-Restart Effect
+    useEffect(() => {
+        let interval;
+        if ((battleState === 'victory' || battleState === 'defeat') && autoRestart) {
+            setCountdown(5);
+            interval = setInterval(() => {
+                setCountdown(prev => {
+                    if (prev <= 1) {
+                        clearInterval(interval);
+                        startBattle();
+                        return null;
+                    }
+                    return prev - 1;
+                });
+            }, 1000);
+        } else {
+            setCountdown(null);
+        }
+        return () => clearInterval(interval);
+    }, [battleState, autoRestart]);
 
     const toggleUnit = (uid) => {
         if (selectedSquad.includes(uid)) {
@@ -32,6 +73,7 @@ export function BattleScreen() {
         setBattleState('fighting');
         setBattleLog(['Battle Started!']);
         setCurrentTurn(0);
+        setCountdown(null); // Clear any lingering countdown
 
         // Simulate Battle Logic
         // For simplicity, we'll do a turn-based calculation in a timeout loop
@@ -39,29 +81,69 @@ export function BattleScreen() {
     };
 
     useEffect(() => {
+        if (isPvp) {
+            setBattleLog(['PVP BATTLE STARTED!']);
+            setBattleState('fighting');
+        }
+    }, [isPvp]);
+
+    useEffect(() => {
         if (battleState !== 'fighting') return;
 
         const battleLoop = async () => {
-            // Setup Teams
-            let allies = selectedSquad.map(uid => {
-                const char = state.inventory.find(c => c.uid === uid);
-                return {
+            // Setup Teams (Use Override if PVP)
+            let allies = [];
+            if (playerSquadOverride) {
+                allies = playerSquadOverride.map(char => ({
                     ...char,
-                    currentHp: calculateStats(char).health,
-                    maxHp: calculateStats(char).health,
-                    stats: calculateStats(char),
+                    currentHp: Number(char.hp || char.maxHp), // Snapshot already has stats
+                    maxHp: Number(char.maxHp),
+                    stats: {
+                        attack: char.atk,
+                        defense: char.def,
+                        speed: char.speed,
+                        health: char.maxHp
+                    },
                     team: 'ally'
-                };
-            });
+                }));
+            } else {
+                allies = selectedSquad.map(uid => {
+                    const char = state.inventory.find(c => c.uid === uid);
+                    return {
+                        ...char,
+                        currentHp: calculateStats(char).health,
+                        maxHp: calculateStats(char).health,
+                        stats: calculateStats(char),
+                        team: 'ally'
+                    };
+                });
+            }
 
-            // Deep copy enemies to track HP
-            let enemies = ENEMIES.map(e => ({
-                ...e,
-                currentHp: e.stats.health,
-                maxHp: e.stats.health,
-                uid: e.id + Math.random(),
-                team: 'enemy'
-            }));
+            // Enemies (Use Override if PVP)
+            let enemies = [];
+            if (enemySquadOverride) {
+                enemies = enemySquadOverride.map(e => ({
+                    ...e,
+                    currentHp: Number(e.hp || e.maxHp),
+                    maxHp: Number(e.maxHp),
+                    stats: {
+                        attack: e.atk,
+                        defense: e.def,
+                        speed: e.speed,
+                        health: e.maxHp
+                    },
+                    uid: e.id, // Use snapshot ID
+                    team: 'enemy'
+                }));
+            } else {
+                enemies = ENEMIES.map(e => ({
+                    ...e,
+                    currentHp: e.stats.health,
+                    maxHp: e.stats.health,
+                    uid: e.id + Math.random(),
+                    team: 'enemy'
+                }));
+            }
 
             let log = [];
             let round = 1;
@@ -103,7 +185,9 @@ export function BattleScreen() {
 
             if (allies.some(a => a.currentHp > 0)) {
                 setBattleState('victory');
-                generateRewards();
+                if (!isPvp) {
+                    generateRewards();
+                }
             } else {
                 setBattleState('defeat');
             }
@@ -170,7 +254,7 @@ export function BattleScreen() {
             {battleState === 'idle' && (
                 <div className="flex-1 flex flex-col md:flex-row gap-6 p-6 min-h-0 z-10">
                     {/* Squad Selection */}
-                    <div className="flex-1 bg-tech-surface clip-angle border border-tech-border flex flex-col relative group">
+                    <div className="flex-1 min-w-0 bg-tech-surface clip-angle border border-tech-border flex flex-col relative group">
                         {/* Decor Corner */}
                         <div className="absolute top-0 right-0 p-2 opacity-50">
                             <div className="w-16 h-1 bg-tech-primary"></div>
@@ -181,10 +265,28 @@ export function BattleScreen() {
                                 <Users size={20} className="text-tech-primary" />
                                 Squad Selection
                             </h2>
-                            <span className="font-mono text-tech-primary text-xl font-bold">{selectedSquad.length} / 4</span>
+                            <div className="flex items-center gap-4">
+                                <label className="flex items-center gap-2 cursor-pointer group hover:opacity-80 transition-opacity">
+                                    <div className={`w-4 h-4 border flex items-center justify-center transition-colors ${autoRestart ? 'bg-tech-primary border-tech-primary text-black' : 'border-zinc-600 bg-black'}`}>
+                                        {autoRestart && <Activity size={10} />}
+                                    </div>
+                                    <input
+                                        type="checkbox"
+                                        className="hidden"
+                                        checked={autoRestart}
+                                        onChange={(e) => setAutoRestart(e.target.checked)}
+                                    />
+                                    <span className={`font-mono text-[10px] uppercase tracking-wider ${autoRestart ? 'text-tech-primary' : 'text-zinc-500'}`}>
+                                        Loop
+                                    </span>
+                                </label>
+                                <span className="font-mono text-tech-primary text-xl font-bold">{selectedSquad.length} / 4</span>
+                            </div>
                         </div>
 
-                        <div className="flex-1 overflow-x-auto p-4 flex gap-4 snap-x scrollbar-thin">
+                        {/* ... (rest of render) */}
+
+                        <div ref={scrollContainerRef} className="flex-1 overflow-x-auto p-4 flex gap-4 snap-x scrollbar-thin">
                             {roster.map(char => {
                                 const baseChar = CHARACTERS.find(c => c.id === char.baseId);
                                 const stats = calculateStats(char);
@@ -196,7 +298,7 @@ export function BattleScreen() {
                                     <button
                                         key={char.uid}
                                         onClick={() => toggleUnit(char.uid)}
-                                        className={`relative min-w-[200px] w-[200px] h-full border text-left transition-all group/card overflow-hidden snap-start flex flex-col ${isSelected
+                                        className={`relative min-w-[200px] w-[200px] shrink-0 h-full border text-left transition-all group/card overflow-hidden snap-start flex flex-col ${isSelected
                                             ? 'bg-tech-primary/10 border-tech-primary'
                                             : 'bg-black/40 border-tech-border hover:border-zinc-500'
                                             }`}
@@ -352,18 +454,49 @@ export function BattleScreen() {
                             </div>
 
                             <button
-                                onClick={() => setBattleState('idle')}
+                                onClick={() => {
+                                    if (isPvp && onBattleEnd) {
+                                        onBattleEnd({ winner: battleState === 'victory' ? 'player' : 'enemy' });
+                                    } else {
+                                        setBattleState('idle');
+                                    }
+                                }}
                                 className="px-12 py-3 bg-white text-black font-bold uppercase tracking-widest hover:scale-105 transition-transform clip-angle"
                             >
-                                Return to Base
+                                {isPvp ? 'CONFIRM RESULTS' : 'Return to Base'}
                             </button>
+
+                            {/* Auto-Restart Controls in Result Screen */}
+                            {!isPvp && (
+                                <div className="mt-4 flex flex-col items-center gap-2">
+                                    <label className="flex items-center gap-2 cursor-pointer group">
+                                        <div className={`w-5 h-5 border flex items-center justify-center transition-colors ${autoRestart ? 'bg-tech-primary border-tech-primary text-black' : 'border-zinc-600 bg-black'}`}>
+                                            {autoRestart && <Activity size={14} />}
+                                        </div>
+                                        <input
+                                            type="checkbox"
+                                            className="hidden"
+                                            checked={autoRestart}
+                                            onChange={(e) => setAutoRestart(e.target.checked)}
+                                        />
+                                        <span className={`font-mono text-xs uppercase tracking-wider ${autoRestart ? 'text-tech-primary' : 'text-zinc-500 group-hover:text-zinc-300'}`}>
+                                            Auto-Restart Operations
+                                        </span>
+                                    </label>
+
+                                    {countdown !== null && (
+                                        <div className="font-mono text-xl font-bold text-tech-primary animate-pulse">
+                                            RESTARTING IN {countdown}s
+                                        </div>
+                                    )}
+                                </div>
+                            )}
                         </div>
                     </div>
                 </div>
             )}
         </div>
     );
-
 }
 
 // Add CSS for spin-slow/bounce-subtle if adding to index.css later, or rely on tailwind defaults

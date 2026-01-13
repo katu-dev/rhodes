@@ -206,23 +206,35 @@ export const CharacterDetail = ({ charUid, onClose }) => {
                                             NO ITEMS FOUND
                                         </div>
                                     ) : (
-                                        availableItems.map(item => (
-                                            <div
-                                                key={item.uid}
-                                                onClick={() => handleEquip(item)}
-                                                className="p-3 border border-zinc-800 bg-black/20 hover:bg-tech-primary/10 hover:border-tech-primary/30 cursor-pointer group transition-all"
-                                            >
-                                                <div className="flex justify-between items-start mb-1">
-                                                    <span className="font-bold text-zinc-300 text-xs group-hover:text-white">{item.name}</span>
-                                                    <span className="text-[9px] font-mono text-zinc-500 uppercase">{item.rarity}</span>
+                                        availableItems.map(item => {
+                                            const owner = item.equippedBy ? state.inventory.find(c => c.uid === item.equippedBy) : null;
+                                            const ownerName = owner ? CHARACTERS.find(c => c.id === owner.baseId)?.name : null;
+
+                                            return (
+                                                <div
+                                                    key={item.uid}
+                                                    onClick={() => handleEquip(item)}
+                                                    className="p-3 border border-zinc-800 bg-black/20 hover:bg-tech-primary/10 hover:border-tech-primary/30 cursor-pointer group transition-all relative"
+                                                >
+                                                    <div className="flex justify-between items-start mb-1">
+                                                        <span className="font-bold text-zinc-300 text-xs group-hover:text-white">{item.name}</span>
+                                                        <span className="text-[9px] font-mono text-zinc-500 uppercase">{item.rarity}</span>
+                                                    </div>
+                                                    <div className="flex gap-2 text-[9px] font-mono text-zinc-400 mb-1">
+                                                        {Object.entries(item.stats).map(([k, v]) => (
+                                                            <span key={k}>{k.toUpperCase().substring(0, 3)} +{v}</span>
+                                                        ))}
+                                                    </div>
+
+                                                    {ownerName && (
+                                                        <div className="text-[10px] text-yellow-500 font-mono flex items-center gap-1 bg-yellow-500/10 p-1 px-2 w-fit rounded-sm border border-yellow-500/20">
+                                                            <User size={10} />
+                                                            <span>USED BY {ownerName}</span>
+                                                        </div>
+                                                    )}
                                                 </div>
-                                                <div className="flex gap-2 text-[9px] font-mono text-zinc-400">
-                                                    {Object.entries(item.stats).map(([k, v]) => (
-                                                        <span key={k}>{k.toUpperCase().substring(0, 3)} +{v}</span>
-                                                    ))}
-                                                </div>
-                                            </div>
-                                        ))
+                                            );
+                                        })
                                     )}
                                 </div>
                             </motion.div>
