@@ -1,8 +1,9 @@
 import React, { useState, useEffect } from 'react';
 import { useGame } from '../../context/GameContext';
 import { ENEMIES } from '../../data/enemies';
+import { CHARACTERS } from '../../data/characters';
 import { ITEMS, MATERIALS } from '../../data/items';
-import { Sword, Shield, Activity, Users, Trophy, Ticket, Coins } from 'lucide-react';
+import { Sword, Shield, Activity, Users, Trophy, Ticket, Coins, Skull } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 export function BattleScreen() {
@@ -183,31 +184,50 @@ export function BattleScreen() {
                             <span className="font-mono text-tech-primary text-xl font-bold">{selectedSquad.length} / 4</span>
                         </div>
 
-                        <div className="flex-1 overflow-y-auto p-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-3">
+                        <div className="flex-1 overflow-x-auto p-4 flex gap-4 snap-x scrollbar-thin">
                             {roster.map(char => {
+                                const baseChar = CHARACTERS.find(c => c.id === char.baseId);
                                 const stats = calculateStats(char);
                                 const isSelected = selectedSquad.includes(char.uid);
+
+                                if (!baseChar) return null;
+
                                 return (
                                     <button
                                         key={char.uid}
                                         onClick={() => toggleUnit(char.uid)}
-                                        className={`relative p-3 border text-left transition-all group/card overflow-hidden ${isSelected
-                                                ? 'bg-tech-primary/10 border-tech-primary'
-                                                : 'bg-black/40 border-tech-border hover:border-zinc-500'
+                                        className={`relative min-w-[200px] w-[200px] h-full border text-left transition-all group/card overflow-hidden snap-start flex flex-col ${isSelected
+                                            ? 'bg-tech-primary/10 border-tech-primary'
+                                            : 'bg-black/40 border-tech-border hover:border-zinc-500'
                                             }`}
                                     >
-                                        <div className="flex justify-between items-start mb-2">
-                                            <div className="font-bold uppercase tracking-wider truncate text-sm">{state.inventory.find(c => c.uid === char.uid)?.baseId}</div>
-                                            <div className="text-[10px] font-mono text-zinc-500">LV.{char.stars}</div>
+                                        {/* Image Background / Header */}
+                                        <div className="flex-1 w-full relative overflow-hidden bg-zinc-900 border-b border-white/5">
+                                            <img
+                                                src={baseChar.image}
+                                                alt={baseChar.name}
+                                                className={`w-full h-full object-cover transition-transform duration-500 ${isSelected ? 'scale-110 grayscale-0' : 'grayscale scale-100 group-hover/card:grayscale-0'}`}
+                                            />
+                                            <div className="absolute top-0 right-0 bg-black/60 p-1 px-2 text-xs font-bold text-white clip-angle-inv backdrop-blur-md">
+                                                LV.{char.stars}
+                                            </div>
                                         </div>
 
-                                        <div className="grid grid-cols-2 gap-1 text-[10px] font-mono text-zinc-400">
-                                            <div>ATK {stats.attack}</div>
-                                            <div>DEF {stats.defense}</div>
+                                        <div className="p-3 shrink-0 flex flex-col gap-2">
+                                            <div className="flex justify-between items-start">
+                                                <div className="font-bold uppercase tracking-wider truncate text-sm text-white group-hover/card:text-tech-primary transition-colors">{baseChar.name}</div>
+                                            </div>
+
+                                            <div className="grid grid-cols-2 gap-1 text-[10px] font-mono text-zinc-400">
+                                                <div className="bg-black/30 p-1 px-2 rounded-sm border border-white/5">ATK {stats.attack}</div>
+                                                <div className="bg-black/30 p-1 px-2 rounded-sm border border-white/5">DEF {stats.defense}</div>
+                                                <div className="bg-black/30 p-1 px-2 rounded-sm border border-white/5">HP {stats.health}</div>
+                                                <div className="bg-black/30 p-1 px-2 rounded-sm border border-white/5">SPD {stats.speed}</div>
+                                            </div>
                                         </div>
 
                                         {isSelected && (
-                                            <div className="absolute top-0 right-0 w-3 h-3 bg-tech-primary"></div>
+                                            <div className="absolute top-2 left-2 w-3 h-3 bg-tech-primary shadow-[0_0_10px_#22d3ee]"></div>
                                         )}
                                         {/* Hover Glitch Line */}
                                         <div className="absolute bottom-0 left-0 h-[2px] w-0 bg-tech-primary transition-all group-hover/card:w-full"></div>
@@ -226,7 +246,9 @@ export function BattleScreen() {
                             <div className="space-y-3 flex-1 overflow-y-auto">
                                 {ENEMIES.map(enemy => (
                                     <div key={enemy.id} className="flex items-center gap-4 bg-black/60 p-3 border-l-2 border-red-800">
-                                        <img src={enemy.image} className="w-12 h-12 grayscale contrast-125 object-cover" alt={enemy.name} />
+                                        <div className="w-12 h-12 bg-red-900/20 border border-red-500/30 flex items-center justify-center">
+                                            <Skull className="w-8 h-8 text-red-500" />
+                                        </div>
                                         <div>
                                             <div className="font-bold text-red-100 uppercase text-sm">{enemy.name}</div>
                                             <div className="text-[10px] font-mono text-red-400 tracking-wider">
@@ -345,4 +367,3 @@ export function BattleScreen() {
 }
 
 // Add CSS for spin-slow/bounce-subtle if adding to index.css later, or rely on tailwind defaults
-```
